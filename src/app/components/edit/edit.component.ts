@@ -3,15 +3,16 @@ import { Project } from "../../models/projetc";
 import { ProjectService } from "../../services/project.services";
 import { UploadService } from "../../services/upload.service";
 import { Global } from "../../services/global";
+import { Router, ActivatedRoute, Params } from "@angular/router";
 
 
 @Component({
-  selector: 'app-create',
-  templateUrl: './create.component.html',
-  styleUrls: ['./create.component.css'],
+  selector: 'app-edit',
+  templateUrl: '../create/create.component.html',
+  styleUrls: ['./edit.component.css'],
   providers: [ProjectService, UploadService]
 })
-export class CreateComponent implements OnInit {
+export class EditComponent implements OnInit {
 
   public title: string;
   public project: Project
@@ -24,25 +25,42 @@ export class CreateComponent implements OnInit {
 
   constructor(
     private _projectService: ProjectService,
-    private _UploadService: UploadService
+    private _UploadService: UploadService,
+
+    private _router: Router,
+    private _route: ActivatedRoute
+
   ) {
-    this.title = "Crear proyecto";
-    this.project = new Project("", "", "", "", 2020, "", "");
+    this.title = "Editar Proyecto";
     this.url = Global.url;
   }
 
+
   ngOnInit(): void {
+    this._route.params.subscribe(params => {
+      let id = params.id;
+      this.getProject(id);
+    });
   }
 
+
+  getProject(id) {
+    this._projectService.getProject(id).subscribe(response => {
+      this.project = response.project;
+    }, error => {
+      console.log(<any>error);
+    });
+  }
   onSubmit(form) {
 
     //Guardar los datos
-    this._projectService.saveProject(this.project).subscribe(
+    this._projectService.updateProject(this.project).subscribe(
       response => {
         if (response.project) {
 
-          //Subir la imagen
+
           if (this.filesToUpload) {
+            //Subir la imagen
             this._UploadService.makeFileRequest(Global.url + "upload/" +
               response.project._id, [], this.filesToUpload, 'image').then((result: any) => {
 
@@ -53,16 +71,14 @@ export class CreateComponent implements OnInit {
 
                 this.status = "success";
 
-                form.reset();
+
               });
           } else {
             this.save_project = response.project;
 
 
             this.status = "success";
-            form.reset();
           }
-
 
 
         } else {
@@ -81,5 +97,3 @@ export class CreateComponent implements OnInit {
   }
 
 }
-
-
